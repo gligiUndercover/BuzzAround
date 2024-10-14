@@ -3,23 +3,23 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BuzzAround/AbilitySystem/Abilities/BuzzAroundGameplayAbility.h"
 #include "BuzzAround/AbilitySystem/Abilities/BuzzAroundProjectile.h"
 #include "BuzzAroundProjectileSpell.generated.h"
 
+struct FGameplayEventData;
+
 UCLASS()
-class BUZZAROUND_API ABuzzAroundProjectileSpell : public ABuzzAroundProjectile
+class BUZZAROUND_API UABuzzAroundProjectileSpell : public UBuzzAroundGameplayAbility
 {
 	GENERATED_BODY()
-
-public:
-	// Sets default values for this actor's properties
-	ABuzzAroundProjectileSpell();
-
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	virtual void ActivateAbility(
+			const FGameplayAbilitySpecHandle Handle
+		   ,const FGameplayAbilityActorInfo* ActorInfo
+		   ,const FGameplayAbilityActivationInfo ActivationInfo
+		   ,const FGameplayEventData* TriggerEventData) override;
 
-public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<ABuzzAroundProjectile> ProjectileClass;
 };

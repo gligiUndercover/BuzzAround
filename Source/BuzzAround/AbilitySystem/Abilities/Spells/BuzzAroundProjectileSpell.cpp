@@ -4,23 +4,17 @@
 #include "BuzzAroundProjectileSpell.h"
 
 
-// Sets default values
-ABuzzAroundProjectileSpell::ABuzzAroundProjectileSpell()
+void UABuzzAroundProjectileSpell::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
+	const FGameplayEventData* TriggerEventData)
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-}
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-// Called when the game starts or when spawned
-void ABuzzAroundProjectileSpell::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-// Called every frame
-void ABuzzAroundProjectileSpell::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
+	const bool bIsOnServer = HasAuthority(&ActivationInfo);
+	if (!bIsOnServer) return;
 
+	//TODO: Spawn points needs to be added here
+
+}
