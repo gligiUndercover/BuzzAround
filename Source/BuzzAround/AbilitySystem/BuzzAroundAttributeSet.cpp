@@ -8,7 +8,7 @@
 
 UBuzzAroundAttributeSet::UBuzzAroundAttributeSet()
 {
-	Health = 3.f;
+	// Health = 3.f;
 }
 
 void UBuzzAroundAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

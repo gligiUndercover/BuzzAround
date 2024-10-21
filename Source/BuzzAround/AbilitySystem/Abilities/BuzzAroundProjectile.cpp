@@ -4,7 +4,10 @@
 #include "BuzzAroundProjectile.h"
 
 #include "Components/SphereComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Components/AudioComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ABuzzAroundProjectile::ABuzzAroundProjectile()
@@ -31,7 +34,10 @@ ABuzzAroundProjectile::ABuzzAroundProjectile()
 void ABuzzAroundProjectile::BeginPlay()
 {
 	Super::BeginPlay();
+	SetLifeSpan(LifeSpan);
 	Sphere->OnComponentBeginOverlap.AddDynamic(this, &ABuzzAroundProjectile::OnSphereOverlap);
+
+	LoopingSoundComponent = UGameplayStatics::SpawnSoundAttached(LoopingSound, GetRootComponent());
 }
 
 void ABuzzAroundProjectile::OnSphereOverlap(
@@ -43,5 +49,30 @@ void ABuzzAroundProjectile::OnSphereOverlap(
 	,const FHitResult& SweepResult
 	)
 {
+	UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
+	LoopingSoundComponent->Stop();
+
+	//These checks are again for multiplayer
+	if (HasAuthority())
+	{
+		Destroy();
+	}
+	else
+	{
+		bHit = true;
+	}
+}
+
+void ABuzzAroundProjectile::Destroyed()
+{
+	//These checks are again for multiplayer
+	if (!bHit && !HasAuthority())
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
+		LoopingSoundComponent->Stop();
+	}
+	Super::Destroyed();
 }
 
