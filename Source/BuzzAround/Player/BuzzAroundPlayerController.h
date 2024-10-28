@@ -35,7 +35,7 @@ private:
 
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputAction> LookAction;
-	
+
 	UPROPERTY()
 	TObjectPtr<ABuzzAroundCharacter> BuzzAroundCharacter;
 
@@ -46,4 +46,5 @@ private:
 	TObjectPtr<UBuzzAroundAbilitySystemComponent> BuzzAroundAbilitySystemComponent;
 
 	UBuzzAroundAbilitySystemComponent* GetASC();
+
 };

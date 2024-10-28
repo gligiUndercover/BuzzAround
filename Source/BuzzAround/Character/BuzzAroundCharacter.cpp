@@ -6,6 +6,7 @@
 #include "BuzzAround/Player/BuzzAroundPlayerController.h"
 #include "BuzzAround/Player/BuzzAroundPlayerState.h"
 #include "BuzzAround/UI/HUD/BuzzAroundHUD.h"
+#include "TimerManager.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 
@@ -27,6 +28,21 @@ ABuzzAroundCharacter::ABuzzAroundCharacter()
 	// CharacterMovementComp->MaxAcceleration = CharacterMaxAcceleration;
 	// CharacterMovementComp->BrakingDecelerationFlying = CharacterBrakingDecelerationFlying;
 	// CharacterMovementComp->AirControl = CharacterAirControl;
+
+	//create collusion shpere
+	RootSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("RootSphereComponent"));
+	RootSphereComponent->SetupAttachment(RootComponent);
+	RootSphereComponent->SetSphereRadius(100.0f); // Adjust the radius as needed
+
+	// Attach the existing skeletal mesh to the sphere component
+	GetMesh()->SetupAttachment(RootSphereComponent);
+
+	//set initial to be used for rotation of collision sphere on mouse by galin
+	InitialRotation = RootSphereComponent->GetRelativeRotation();
+	//Initilize TargetRotation by galin
+	TargetRotation = InitialRotation; 
+	bCanRotateBack = false;
+	
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
@@ -79,5 +95,61 @@ void ABuzzAroundCharacter::InitAbilityActorInfo()
 
 	InitAttributes();
 }
+
+
+// Update rotation
+void ABuzzAroundCharacter::UpdateRotation(float LookAxisX)
+{
+	GEngine->AddOnScreenDebugMessage(1, 3.f, FColor::Red, "Called Update Rotation on PLayer BP");
+	float DeltaTime = GetWorld()->GetDeltaSeconds();
+	bCanRotateBack = false;
+	
+	// Smoothly interpolate to the target rotation
+	TargetRotation.Roll = FMath::Clamp(InitialRotation.Roll + (LookAxisX * 30.0f), -30.f, 30.0f);
+	InitialRotation = FMath::RInterpTo(InitialRotation, TargetRotation, DeltaTime, 10);
+	RootSphereComponent->SetRelativeRotation(InitialRotation);
+	
+	
+	//Sets timer to wait for a second before invoking rotation back to Roll = 0.0f	
+	if (InitialRotation.Roll> 0.3f)
+	{
+		GetWorldTimerManager().SetTimer(RotationBackHandle, this, &ABuzzAroundCharacter::ResetRotation, 1.0f, false, 1.0f);
+	}
+
+	
+}
+
+// sets a timer to continously update Roll to 0.0
+void ABuzzAroundCharacter::ResetRotation()
+{
+	float DeltaTime = GetWorld()->GetDeltaSeconds();
+	InitialRotation = RootSphereComponent->GetRelativeRotation();
+	TargetRotation = FRotator(InitialRotation.Pitch, InitialRotation.Yaw, 0.0f);
+
+	UE_LOG(LogTemp, Warning, TEXT("InitialRotation: %s, TargetRotation: %s"), *InitialRotation.ToString(), *TargetRotation.ToString());
+	GetWorldTimerManager().SetTimer(RotationTimerHandle , this, &ABuzzAroundCharacter::UpdateRotation, 0.01f, true, 0.01f);
+
+	///clears timer set in UpdateRotation
+	GetWorld()->GetTimerManager().ClearTimer(RotationBackHandle);
+
+}
+
+//updates roll back to 0.00 and clears timer
+void ABuzzAroundCharacter::UpdateRotation()
+	{
+		float DeltaTime = GetWorld()->GetDeltaSeconds(); // This gives the actual delta time between frames
+		FRotator CurrentRotation = RootSphereComponent->GetRelativeRotation();
+		FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, 5.0f);
+
+		UE_LOG(LogTemp, Warning, TEXT("CurrentRotation: %s, NewRotation: %s"), *CurrentRotation.ToString(), *NewRotation.ToString());
+
+		RootSphereComponent->SetRelativeRotation(NewRotation);
+
+		if (FMath::IsNearlyEqual(CurrentRotation.Roll, 0.0f, 0.01f))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Rotation finished, clearing timer"));
+			GetWorld()->GetTimerManager().ClearTimer(RotationTimerHandle);
+		}
+	}
 
 

@@ -19,6 +19,7 @@ void ABuzzAroundPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
 
+	
 	if (BuzzAroundCharacter)
 	{
 		// Get the control rotation, which represents the camera/character's facing direction
@@ -30,6 +31,9 @@ void ABuzzAroundPlayerController::PlayerTick(float DeltaTime)
 		// Display the facing direction on screen
 		FString FacingDirectionText = FString::Printf(TEXT("Facing Direction: X=%.2f, Y=%.2f, Z=%.2f"), FacingDirection.X, FacingDirection.Y, FacingDirection.Z);
 		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, FacingDirectionText);
+						
+		
+
 	}
 }
 
@@ -59,27 +63,40 @@ void ABuzzAroundPlayerController::BeginPlay()
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent)) {
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABuzzAroundPlayerController::Move);
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABuzzAroundPlayerController::Look);
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, "Input Actions Bound!");
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABuzzAroundPlayerController::Look);		
+
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, "Input Actions Bound!");
 	}
 	else
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "EnhancedInputComponent is NULL!");
 	}
+
 }
 
 void ABuzzAroundPlayerController::Look(const FInputActionValue& Value)
 {
-	FVector LookAxisVector = Value.Get<FVector>();
 
+	FVector LookAxisVector = Value.Get<FVector>();
 	if (nullptr != BuzzAroundCharacter)
 	{
 		GEngine->AddOnScreenDebugMessage(1, 3.f, FColor::Red, "Inside the Look callback");
-		// add yaw and pitch input to controller
-		BuzzAroundCharacter->AddControllerYawInput(LookAxisVector.X);
+
+		if (LookAxisVector.X != 0.0f)
+		{
+			//adds Yaw to character
+			BuzzAroundCharacter->AddControllerYawInput(LookAxisVector.X);
+			BuzzAroundCharacter->UpdateRotation(LookAxisVector.X);
+			
+			GEngine->AddOnScreenDebugMessage(1, 3.f, FColor::Red, "Inside the custom update rotation in the controller");
+		}
+		//adds Pitch to character
 		BuzzAroundCharacter->AddControllerPitchInput(LookAxisVector.Y);
 	}
+		
 }
+
+
 
 void ABuzzAroundPlayerController::Move(const FInputActionValue& Value)
 {
